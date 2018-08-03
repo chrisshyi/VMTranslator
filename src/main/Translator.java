@@ -86,7 +86,7 @@ public class Translator {
      */
     public String compileToAssembly(List<String> VMCode) {
         String operator = VMCode.get(0);
-        String translationTemplate = "";
+        String translationTemplate;
         String translatedOperator = "";
         String translatedAssembly = "";
         switch (operator) {
@@ -137,5 +137,19 @@ public class Translator {
                 translatedAssembly = String.format(translationTemplate, VMCode.get(2), VMCode.get(1));
         }
         return translatedAssembly;
+    }
+
+    /**
+     * @return the code fragment that pushes a true value onto the stack
+     */
+    public String getPushTrue() {
+        return this.pushTrue;
+    }
+
+    /**
+     * @return the code fragment that pushes a false value onto the stack
+     */
+    public String getPushFalse() {
+        return this.pushFalse;
     }
 }

@@ -84,4 +84,28 @@ class TranslatorTest {
         String translation = translator.compileToAssembly(List.of("or"));
         assertEquals(expected, translation);
     }
+
+    @Test
+    void translateNeg() {
+        String expected = "@SP\n" +
+                "M=M-1\n" +
+                "A=M\n" +
+                "M=-M\n" +
+                "@SP\n" +
+                "M=M+1\n";
+
+        assertEquals(expected, translator.compileToAssembly(List.of("neg")));
+    }
+
+    @Test
+    void translateNot() {
+        String expected = "@SP\n" +
+                "M=M-1\n" +
+                "A=M\n" +
+                "M=!M\n" +
+                "@SP\n" +
+                "M=M+1\n";
+
+        assertEquals(expected, translator.compileToAssembly(List.of("not")));
+    }
 }

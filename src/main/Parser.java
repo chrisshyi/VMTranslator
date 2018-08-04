@@ -40,6 +40,17 @@ public class Parser {
         int desiredLength;
         if (splitLine.get(0).equals("push") || splitLine.get(0).equals("pop")) {
             desiredLength = 3;
+            // if attempting to change pointer, change it to this or that
+            if (splitLine.get(1).equals("pointer")) {
+                splitLine.subList(1, splitLine.size());
+                if (splitLine.get(2).equals("0")) {
+                    splitLine.add("this");
+                    splitLine.add("0");
+                } else {
+                    splitLine.add("that");
+                    splitLine.add("0");
+                }
+            }
         } else {
             desiredLength = 1;
         }

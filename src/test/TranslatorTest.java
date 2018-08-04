@@ -30,7 +30,7 @@ class TranslatorTest {
                 "@SP\n" +
                 "M=M+1\n";
 
-        String translation = translator.compileToAssembly(List.of("add"));
+        String translation = translator.compileToAssembly(List.of("add"), "");
         assertEquals(expected, translation);
     }
 
@@ -47,7 +47,7 @@ class TranslatorTest {
                 "@SP\n" +
                 "M=M+1\n";
 
-        String translation = translator.compileToAssembly(List.of("and"));
+        String translation = translator.compileToAssembly(List.of("and"), "");
         assertEquals(expected, translation);
     }
 
@@ -64,7 +64,7 @@ class TranslatorTest {
                 "@SP\n" +
                 "M=M+1\n";
 
-        String translation = translator.compileToAssembly(List.of("sub"));
+        String translation = translator.compileToAssembly(List.of("sub"), "");
         assertEquals(expected, translation);
     }
 
@@ -81,7 +81,7 @@ class TranslatorTest {
                 "@SP\n" +
                 "M=M+1\n";
 
-        String translation = translator.compileToAssembly(List.of("or"));
+        String translation = translator.compileToAssembly(List.of("or"), "");
         assertEquals(expected, translation);
     }
 
@@ -94,7 +94,7 @@ class TranslatorTest {
                 "@SP\n" +
                 "M=M+1\n";
 
-        assertEquals(expected, translator.compileToAssembly(List.of("neg")));
+        assertEquals(expected, translator.compileToAssembly(List.of("neg"), ""));
     }
 
     @Test
@@ -106,6 +106,6 @@ class TranslatorTest {
                 "@SP\n" +
                 "M=M+1\n";
 
-        assertEquals(expected, translator.compileToAssembly(List.of("not")));
+        assertEquals(expected, translator.compileToAssembly(List.of("not"), ""));
     }
 }

@@ -70,16 +70,10 @@ public class Translator {
             "A=D+M\n" +
             "D=M\n";
 
-    // template for pushing values from memory segment(s) onto the stack
-    // first %s is the index (or constant)
-    // second %s is the code fragment for retrieving values from memory
-    private final String pushTemplate = "@%s\n" +
-            "D=A\n" +
-            "%s" + // put segment value retrieval here, or empty string if constant
-            "@SP\n" +
-            "A=M\n" +
-            "M=D\n" +
-            incrementSP;
+    // code fragment for retrieving a value from the temporary memory segment
+    private final String retrieveValFromTemp = "@5\n" +
+            "A=D+A\n" +
+            "D=M\n";
 
     // template for pushing a pointer value,
     // first %s is either THIS or THAT
@@ -98,6 +92,17 @@ public class Translator {
             "@%s\n" +
             "M=D\n";
 
+    // template for pushing values from memory segment(s) onto the stack
+    // first %s is the index (or constant)
+    // second %s is the code fragment for retrieving values from memory
+    private final String pushTemplate = "@%s\n" +
+            "D=A\n" +
+            "%s" + // put segment value retrieval here, or empty string if constant
+            "@SP\n" +
+            "A=M\n" +
+            "M=D\n" +
+            incrementSP;
+
     // first %s is the index, second %s is the memory segment
     private final String popTemplate = "@%s\n" +
             "D=A\n" +
@@ -111,6 +116,22 @@ public class Translator {
             "@R13\n" +
             "A=M\n" +
             "M=D\n";
+
+    // pops the top of the stack into a temporary memory segment
+    // %s is for the offset
+    private final String popToTemp = "@5\n" +
+            "D=A\n" +
+            "@%s\n" +
+            "D=D+A\n" +
+            "@R13\n" +
+            "M=D\n" +
+            decrementSP +
+            "A=M\n" +
+            "D=M\n" +
+            "@R13\n" +
+            "A=M\n" +
+            "M=D\n";
+
 
     /**
      * Translates VM code to Hack assembly code
@@ -198,9 +219,6 @@ public class Translator {
                     case "that":
                         memAddr = "THAT";
                         break;
-                    case "temp":
-                        memAddr = "5";
-                        break;
                     case "static":
                         memAddr = String.format("%s.%s", fileName, index);
                         break;
@@ -209,6 +227,9 @@ public class Translator {
                     String memoryRetrievalFragment;
                     if (memSeg.equals("constant")) {
                         memoryRetrievalFragment = "";
+
+                    } else if (memSeg.equals("temp")) {
+                        memoryRetrievalFragment = retrieveValFromTemp;
                     } else {
                         memoryRetrievalFragment = String.format(retrieveValFromMem, memAddr);
                     }
@@ -216,6 +237,10 @@ public class Translator {
                     translatedAssembly = String.format(translationTemplate, index, memoryRetrievalFragment);
                     break;
                 } else {
+                    if (memSeg.equals("temp")) {
+                        translatedAssembly = String.format(popToTemp, index);
+                        break;
+                    }
                     translationTemplate = popTemplate;
                     translatedAssembly = String.format(translationTemplate, index, memAddr);
                     break;

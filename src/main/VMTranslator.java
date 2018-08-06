@@ -14,9 +14,11 @@ public class VMTranslator {
         String inputFilePath = args[0];
         File inputFile = new File(inputFilePath);
         int lastPeriodInPath = inputFilePath.lastIndexOf('.');
-        String inputFileName = inputFilePath.substring(0, lastPeriodInPath);
+        int lastSeparatorInPath = inputFilePath.lastIndexOf(File.separatorChar);
+        String inputFileFullPathNoExtension = inputFilePath.substring(0, lastPeriodInPath);
+        String inputFileName = inputFilePath.substring(lastSeparatorInPath + 1, lastPeriodInPath);
 
-        String outputFilePath =inputFileName + ".asm";
+        String outputFilePath = inputFileFullPathNoExtension + ".asm";
         File outputFile = new File(outputFilePath);
         Parser parser = new Parser();
         Translator translator = new Translator();
@@ -24,9 +26,6 @@ public class VMTranslator {
         try (BufferedReader br = new BufferedReader(new FileReader(inputFile));
              BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
             String line;
-            // write code fragments for pushing true and false values onto the stack
-//            bw.write(translator.getPushFalse());
-//            bw.write(translator.getPushTrue());
             while ((line = br.readLine()) != null) {
                 // skip comment line
                 if (line.startsWith("/") || line.length() == 0) {

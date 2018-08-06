@@ -26,7 +26,7 @@ class TranslatorTest {
                 "@SP\n" +
                 "M=M-1\n" +
                 "A=M\n" +
-                "M=D+M\n" +
+                "M=M+D\n" +
                 "@SP\n" +
                 "M=M+1\n";
 
@@ -43,7 +43,7 @@ class TranslatorTest {
                 "@SP\n" +
                 "M=M-1\n" +
                 "A=M\n" +
-                "M=D&M\n" +
+                "M=M&D\n" +
                 "@SP\n" +
                 "M=M+1\n";
 
@@ -60,7 +60,7 @@ class TranslatorTest {
                 "@SP\n" +
                 "M=M-1\n" +
                 "A=M\n" +
-                "M=D-M\n" +
+                "M=M-D\n" +
                 "@SP\n" +
                 "M=M+1\n";
 
@@ -77,7 +77,7 @@ class TranslatorTest {
                 "@SP\n" +
                 "M=M-1\n" +
                 "A=M\n" +
-                "M=D|M\n" +
+                "M=M|D\n" +
                 "@SP\n" +
                 "M=M+1\n";
 

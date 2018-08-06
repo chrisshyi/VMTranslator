@@ -108,4 +108,27 @@ class TranslatorTest {
 
         assertEquals(expected, translator.compileToAssembly(List.of("not"), ""));
     }
+
+    @Test
+    void translatePointerPush() {
+        String expected = "@THIS\n" +
+                "D=M\n" +
+                "@SP\n" +
+                "A=M\n" +
+                "M=D\n" +
+                "@SP\n" +
+                "M=M+1\n";
+        assertEquals(expected, translator.compileToAssembly(List.of("push", "pointer", "0"), ""));
+    }
+
+    @Test
+    void translatePointerPop() {
+        String expected = "@SP\n" +
+                "M=M-1\n" +
+                "A=M\n" +
+                "D=M\n" +
+                "@THAT\n" +
+                "M=D\n";
+        assertEquals(expected, translator.compileToAssembly(List.of("pop", "pointer", "1"), ""));
+    }
 }

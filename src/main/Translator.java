@@ -3,6 +3,14 @@ package main;
 import java.util.List;
 
 public class Translator {
+    // used to keep track of comparison operators so
+    // that labels may be used properly
+    private int numComparisons = 0;
+
+    private final String endProgram = "(END)\n" +
+            "@END\n" +
+            "0;JMP\n";
+
     /*
      * Start by defining string templates to avoid code repetition
      */
@@ -17,26 +25,28 @@ public class Translator {
             "A=M\n" +
             "D=M\n";
 
-    // pushes a true value onto the stack
-    private final String pushTrue = "(TRUE)\n" + "@SP\n" +
-            "A=M\n" +
-            "M=-1\n" +
-            incrementSP;
-
-    // pushes a false value onto the stack
-    private final String pushFalse = "(FALSE)\n" + "@SP\n" +
-            "A=M\n" +
-            "M=0\n" +
-            incrementSP;
     // template for eg, gt and lt
+    // first %s is the comparison count (from numComparisons field)
+    // second %s is the comparison operator (JEQ, JGT, or JLT)
+    // third %s is the comparison count again
+    // fourth %s is the comparison count again
     private final String comparisonTemplate = getTopOfStack +
-            decrementSP +
+            "A=A-1\n" +
+            "D=M-D\n" +
+            "@TRUE_%1$s\n" +
+            "D;%2$s\n" +
+            "@SP\n" + // go to where the boolean value should be placed
             "A=M\n" +
-            "D=D-M\n" +
-            "@TRUE\n" +
-            "D;%s\n" +
-            "@FALSE\n" +
-            "0;JMP\n";
+            "A=A-1\n" +
+            "M=0\n" + // push false value
+            "@REST_%1$s\n" + // goto rest of the code
+            "0;JMP\n" +
+            "(TRUE_%1$s)\n" +
+            "@SP\n" +
+            "A=M\n" +
+            "A=A-1\n" +
+            "M=-1\n" +
+            "(REST_%1$s)\n";
 
     // template for binary arithmetic and logical operations
     // add, sub, and, or
@@ -45,7 +55,7 @@ public class Translator {
             "D=M\n" +
             decrementSP +
             "A=M\n" +
-            "M=D%sM\n" +
+            "M=M%sD\n" +
             incrementSP;
 
     // template for unary arithmetic and logical operations
@@ -70,6 +80,23 @@ public class Translator {
             "A=M\n" +
             "M=D\n" +
             incrementSP;
+
+    // template for pushing a pointer value,
+    // first %s is either THIS or THAT
+    private final String pushPointer = "@%s\n" +
+            "D=M\n" +
+            "@SP\n" +
+            "A=M\n" +
+            "M=D\n" +
+            incrementSP;
+
+    // template for popping into a pointer memory location
+    // %s is either THIS or THAT
+    private final String popPointer = decrementSP +
+            "A=M\n" +
+            "D=M\n" +
+            "@%s\n" +
+            "M=D\n";
 
     // first %s is the index, second %s is the memory segment
     private final String popTemplate = "@%s\n" +
@@ -98,6 +125,8 @@ public class Translator {
         String translatedAssembly = "";
         switch (operator) {
             case "eq": case "gt": case "lt":
+                this.numComparisons += 1;
+                String comparisonsString = Integer.toString(this.numComparisons);
                 translationTemplate = comparisonTemplate;
                 if (operator.equals("eq")) {
                     translatedOperator = "JEQ";
@@ -106,7 +135,8 @@ public class Translator {
                 } else {
                     translatedOperator = "JLT";
                 }
-                translatedAssembly = String.format(translationTemplate, translatedOperator);
+                translatedAssembly = String.format(translationTemplate,
+                        comparisonsString, translatedOperator);
                 break;
             case "add": case "sub": case "and": case "or":
                 translationTemplate = binaryArithAndLogicTemplate;
@@ -138,6 +168,20 @@ public class Translator {
             case "push": case "pop":
                 String memSeg = VMCode.get(1);
                 String index = VMCode.get(2);
+                if (memSeg.equals("pointer")) {
+                    String pointerTemplate;
+                    if (operator.equals("push")) {
+                        pointerTemplate = pushPointer;
+                    } else {
+                        pointerTemplate = popPointer;
+                    }
+                    if (index.equals("0")) {
+                        translatedAssembly = String.format(pointerTemplate, "THIS");
+                    } else {
+                        translatedAssembly = String.format(pointerTemplate, "THAT");
+                    }
+                    break;
+                }
                 String memAddr = ""; // the translated memory address location, e.g. local -> LCL
                 switch (memSeg) {
                     // don't need to handle the "pointer" case since it's already been taken
@@ -174,22 +218,16 @@ public class Translator {
                 } else {
                     translationTemplate = popTemplate;
                     translatedAssembly = String.format(translationTemplate, index, memAddr);
+                    break;
                 }
         }
         return translatedAssembly;
     }
 
     /**
-     * @return the code fragment that pushes a true value onto the stack
+     * @return the code fragment that terminates the program
      */
-    public String getPushTrue() {
-        return this.pushTrue;
-    }
-
-    /**
-     * @return the code fragment that pushes a false value onto the stack
-     */
-    public String getPushFalse() {
-        return this.pushFalse;
+    public String getEndProgram() {
+        return this.endProgram;
     }
 }

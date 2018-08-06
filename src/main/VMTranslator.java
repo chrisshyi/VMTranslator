@@ -25,11 +25,11 @@ public class VMTranslator {
              BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
             String line;
             // write code fragments for pushing true and false values onto the stack
-            bw.write(translator.getPushFalse());
-            bw.write(translator.getPushTrue());
+//            bw.write(translator.getPushFalse());
+//            bw.write(translator.getPushTrue());
             while ((line = br.readLine()) != null) {
                 // skip comment line
-                if (line.startsWith("/")) {
+                if (line.startsWith("/") || line.length() == 0) {
                     continue;
                 }
                 List<String> parsedLine = parser.parse(line);

@@ -7,6 +7,11 @@ public class Translator {
     // that labels may be used properly
     private int numComparisons = 0;
 
+    // keeps track of the function currently being translated,
+    // needed for labels and gotos
+    // mutate this when a new function declaration is encountered in the VM code
+    private String currFunction = "";
+
     // code fragment for ending the program in an infinite loop
     private final String endProgram = "(END)\n" +
             "@END\n" +
@@ -257,13 +262,13 @@ public class Translator {
                     break;
                 }
             case "label":
-                translatedAssembly = String.format("(%s)\n", VMCode.get(1));
+                translatedAssembly = String.format("(%s$%s)\n", this.currFunction, VMCode.get(1));
                 break;
             case "goto":
-                translatedAssembly = String.format("@%s\n0;JMP\n", VMCode.get(1));
+                translatedAssembly = String.format("@%s$%s\n0;JMP\n", this.currFunction, VMCode.get(1));
                 break;
             case "if-goto":
-                translatedAssembly = String.format(getTopOfStack + "@%s\nD;JNE\n", VMCode.get(1));
+                translatedAssembly = String.format(getTopOfStack + "@%s$%s\nD;JNE\n", this.currFunction, VMCode.get(1));
                 break;
         }
         return translatedAssembly;
@@ -274,5 +279,12 @@ public class Translator {
      */
     public String getEndProgram() {
         return this.endProgram;
+    }
+
+    /**
+     * Setter for testing purposes
+     */
+    public void setCurrFunction(String function) {
+        this.currFunction = function;
     }
 }

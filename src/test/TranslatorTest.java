@@ -134,23 +134,26 @@ class TranslatorTest {
 
     @Test
     void translateLabel() {
-        String expected = "(LABEL1)\n";
+        translator.setCurrFunction("currFunc");
+        String expected = "(currFunc$LABEL1)\n";
         assertEquals(expected, translator.compileToAssembly(List.of("label", "LABEL1"), ""));
     }
 
     @Test
     void translateGoto() {
-        String expected = "@LABEL1\n0;JMP\n";
+        translator.setCurrFunction("currFunc");
+        String expected = "@currFunc$LABEL1\n0;JMP\n";
         assertEquals(expected, translator.compileToAssembly(List.of("goto", "LABEL1"), ""));
     }
 
     @Test
     void translateIfGoto() {
+        translator.setCurrFunction("currFunc");
         String expected = "@SP\n" +
                 "M=M-1\n" +
                 "A=M\n" +
                 "D=M\n" +
-                "@LABEL1\n" +
+                "@currFunc$LABEL1\n" +
                 "D;JNE\n";
         assertEquals(expected, translator.compileToAssembly(List.of("if-goto", "LABEL1"), ""));
     }

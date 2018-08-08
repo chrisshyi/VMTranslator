@@ -34,7 +34,7 @@ public class Translator {
     private final String comparisonTemplate = getTopOfStack +
             "A=A-1\n" +
             "D=M-D\n" +
-            "@TRUE_%1$s\n" +
+            "@TRUE_%1$s\n" + // %1$s is a way of specifying a positional formatter, 1$ being the first arg
             "D;%2$s\n" +
             "@SP\n" + // go to where the boolean value should be placed
             "A=M\n" +
@@ -256,6 +256,15 @@ public class Translator {
                     translatedAssembly = String.format(translationTemplate, index, memAddr);
                     break;
                 }
+            case "label":
+                translatedAssembly = String.format("(%s)\n", VMCode.get(1));
+                break;
+            case "goto":
+                translatedAssembly = String.format("@%s\n0;JMP\n", VMCode.get(1));
+                break;
+            case "if-goto":
+                translatedAssembly = String.format(getTopOfStack + "@%s\nD;JNE\n", VMCode.get(1));
+                break;
         }
         return translatedAssembly;
     }

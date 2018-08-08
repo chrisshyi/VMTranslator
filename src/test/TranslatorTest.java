@@ -131,4 +131,27 @@ class TranslatorTest {
                 "M=D\n";
         assertEquals(expected, translator.compileToAssembly(List.of("pop", "pointer", "1"), ""));
     }
+
+    @Test
+    void translateLabel() {
+        String expected = "(LABEL1)\n";
+        assertEquals(expected, translator.compileToAssembly(List.of("label", "LABEL1"), ""));
+    }
+
+    @Test
+    void translateGoto() {
+        String expected = "@LABEL1\n0;JMP\n";
+        assertEquals(expected, translator.compileToAssembly(List.of("goto", "LABEL1"), ""));
+    }
+
+    @Test
+    void translateIfGoto() {
+        String expected = "@SP\n" +
+                "M=M-1\n" +
+                "A=M\n" +
+                "D=M\n" +
+                "@LABEL1\n" +
+                "D;JNE\n";
+        assertEquals(expected, translator.compileToAssembly(List.of("if-goto", "LABEL1"), ""));
+    }
 }

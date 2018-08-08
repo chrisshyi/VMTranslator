@@ -18,10 +18,17 @@ public class Parser {
         // split the line at where the comment starts
         List<String> splitLine = new ArrayList<>(Arrays.asList(line.split("[/\\s]")));
         int desiredLength;
-        if (splitLine.get(0).equals("push") || splitLine.get(0).equals("pop")) {
-            desiredLength = 3;
-        } else {
-            desiredLength = 1;
+        String operation = splitLine.get(0);
+        switch (operation) {
+            case "push": case "pop": case "function": case "call":
+                desiredLength = 3;
+                break;
+            case "label": case "goto": case "if-goto":
+                desiredLength = 2;
+                break;
+            default:
+                desiredLength = 1;
+                break;
         }
         splitLine.subList(desiredLength, splitLine.size()).clear();
         return splitLine;

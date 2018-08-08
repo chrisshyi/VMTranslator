@@ -40,4 +40,20 @@ class ParserTest {
         assertEquals(3, splitLine.size());
         assertEquals(List.of("pop", "local", "2"), splitLine);
     }
+
+    @Test
+    void testFunctionDeclaration() {
+        String line = "function myFunc 3 // declares a function with 3 local vars";
+        List<String> splitLine = parser.parse(line);
+        assertEquals(3, splitLine.size());
+        assertEquals(List.of("function", "myFunc", "3"), splitLine);
+    }
+
+    @Test
+    void testLabelDeclaration() {
+        String line = "label myLabel   // declares a label";
+        List<String> splitLine = parser.parse(line);
+        assertEquals(2, splitLine.size());
+        assertEquals(List.of("label", "myLabel"), splitLine);
+    }
 }

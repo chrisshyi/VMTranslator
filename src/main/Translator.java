@@ -7,6 +7,7 @@ public class Translator {
     // that labels may be used properly
     private int numComparisons = 0;
 
+    // code fragment for ending the program in an infinite loop
     private final String endProgram = "(END)\n" +
             "@END\n" +
             "0;JMP\n";
@@ -149,12 +150,16 @@ public class Translator {
                 this.numComparisons += 1;
                 String comparisonsString = Integer.toString(this.numComparisons);
                 translationTemplate = comparisonTemplate;
-                if (operator.equals("eq")) {
-                    translatedOperator = "JEQ";
-                } else if (operator.equals("gt")) {
-                    translatedOperator = "JGT";
-                } else {
-                    translatedOperator = "JLT";
+                switch (operator) {
+                    case "eq":
+                        translatedOperator = "JEQ";
+                        break;
+                    case "gt":
+                        translatedOperator = "JGT";
+                        break;
+                    case "lt":
+                        translatedOperator = "JLT";
+                        break;
                 }
                 translatedAssembly = String.format(translationTemplate,
                         comparisonsString, translatedOperator);
@@ -179,10 +184,13 @@ public class Translator {
                 break;
             case "neg": case "not":
                 translationTemplate = unaryArithAndLogicTemplate;
-                if (operator.equals("neg")) {
-                    translatedOperator = "-";
-                } else {
-                    translatedOperator = "!";
+                switch (operator) {
+                    case "neg":
+                        translatedOperator = "-";
+                        break;
+                    case "not":
+                        translatedOperator = "!";
+                        break;
                 }
                 translatedAssembly = String.format(translationTemplate, translatedOperator);
                 break;
@@ -225,13 +233,16 @@ public class Translator {
                 }
                 if (operator.equals("push")) {
                     String memoryRetrievalFragment;
-                    if (memSeg.equals("constant")) {
-                        memoryRetrievalFragment = "";
-
-                    } else if (memSeg.equals("temp")) {
-                        memoryRetrievalFragment = retrieveValFromTemp;
-                    } else {
-                        memoryRetrievalFragment = String.format(retrieveValFromMem, memAddr);
+                    switch (memSeg) {
+                        case "constant":
+                            memoryRetrievalFragment = "";
+                            break;
+                        case "temp":
+                            memoryRetrievalFragment = retrieveValFromTemp;
+                            break;
+                        default:
+                            memoryRetrievalFragment = String.format(retrieveValFromMem, memAddr);
+                            break;
                     }
                     translationTemplate = pushTemplate;
                     translatedAssembly = String.format(translationTemplate, index, memoryRetrievalFragment);

@@ -157,4 +157,45 @@ class TranslatorTest {
                 "D;JNE\n";
         assertEquals(expected, translator.compileToAssembly(List.of("if-goto", "LABEL1"), ""));
     }
+
+    @Test
+    void translateFunctionCall() {
+        translator.setCurrFunction("currFunc");
+        StringBuilder expectedSB = new StringBuilder("@RETURN_1\n" +
+                "D=A\n" +
+                "@SP\n" +
+                "A=M\n" +
+                "M=D\n" +
+                "@SP\n" +
+                "M=M+1\n");
+        for (String memSeg : List.of("LCL", "ARG", "THIS", "THAT")) {
+            expectedSB.append(String.format("@0\n" +
+                    "D=A\n" +
+                    "@%s\n" +
+                    "A=D+M\n" +
+                    "D=M\n" +
+                    "@SP\n" +
+                    "A=M\n" +
+                    "M=D\n" +
+                    "@SP\n" +
+                    "M=M+1\n", memSeg));
+        }
+        expectedSB.append("D=0\n" +
+                "@3\n" +
+                "D=D-A\n" +
+                "@5\n" +
+                "D=D-A\n" +
+                "@SP\n" +
+                "D=M-D\n" +
+                "@ARG\n" +
+                "M=D\n");
+        expectedSB.append("@SP\n" +
+                "D=M\n" +
+                "@LCL\n" +
+                "M=D\n");
+        expectedSB.append("@currFunc$calledFunc\n" +
+                "0;JMP\n");
+        expectedSB.append(String.format("(RETURN_%d)\n", 1));
+        assertEquals(expectedSB.toString(), translator.compileToAssembly(List.of("call", "calledFunc", "3"), ""));
+    }
 }

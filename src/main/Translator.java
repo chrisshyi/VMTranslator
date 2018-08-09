@@ -7,6 +7,10 @@ public class Translator {
     // that labels may be used properly
     private int numComparisons = 0;
 
+    // keeps track of return labels so that
+    // each label may be unique
+    private int numReturnLabels = 0;
+
     // keeps track of the function currently being translated,
     // needed for labels and gotos
     // mutate this when a new function declaration is encountered in the VM code
@@ -39,20 +43,20 @@ public class Translator {
     private final String comparisonTemplate = getTopOfStack +
             "A=A-1\n" +
             "D=M-D\n" +
-            "@TRUE_%1$s\n" + // %1$s is a way of specifying a positional formatter, 1$ being the first arg
+            "@TRUE_%1$d\n" + // %1$s is a way of specifying a positional formatter, 1$ being the first arg
             "D;%2$s\n" +
             "@SP\n" + // go to where the boolean value should be placed
             "A=M\n" +
             "A=A-1\n" +
             "M=0\n" + // push false value
-            "@REST_%1$s\n" + // goto rest of the code
+            "@REST_%1$d\n" + // goto rest of the code
             "0;JMP\n" +
-            "(TRUE_%1$s)\n" +
+            "(TRUE_%1$d)\n" +
             "@SP\n" +
             "A=M\n" +
             "A=A-1\n" +
             "M=-1\n" +
-            "(REST_%1$s)\n";
+            "(REST_%1$d)\n";
 
     // template for binary arithmetic and logical operations
     // add, sub, and, or
@@ -138,7 +142,22 @@ public class Translator {
             "A=M\n" +
             "M=D\n";
 
+    private final String pushReturnAddr = "@RETURN_%d\n" +
+            "D=A\n" +
+            "@SP\n" +
+            "A=M\n" +
+            "M=D\n" +
+            incrementSP;
 
+    private final String repositionARG = "D=0\n" +
+            "@%d\n" +
+            "D=D-A\n" +
+            "@5\n" +
+            "D=D-A\n" +
+            "@SP\n" +
+            "D=M-D\n" +
+            "@ARG\n" +
+            "M=D\n";
     /**
      * Translates VM code to Hack assembly code
      * @param VMCode the virtual machine code to be translated, split into its fields
@@ -153,7 +172,6 @@ public class Translator {
         switch (operator) {
             case "eq": case "gt": case "lt":
                 this.numComparisons += 1;
-                String comparisonsString = Integer.toString(this.numComparisons);
                 translationTemplate = comparisonTemplate;
                 switch (operator) {
                     case "eq":
@@ -167,7 +185,7 @@ public class Translator {
                         break;
                 }
                 translatedAssembly = String.format(translationTemplate,
-                        comparisonsString, translatedOperator);
+                        this.numComparisons, translatedOperator);
                 break;
             case "add": case "sub": case "and": case "or":
                 translationTemplate = binaryArithAndLogicTemplate;
@@ -269,6 +287,25 @@ public class Translator {
                 break;
             case "if-goto":
                 translatedAssembly = String.format(getTopOfStack + "@%s$%s\nD;JNE\n", this.currFunction, VMCode.get(1));
+                break;
+            case "call":
+                String funcName = VMCode.get(1);
+                int numArgs = Integer.parseInt(VMCode.get(2));
+                this.numReturnLabels += 1;
+                StringBuilder sb = new StringBuilder();
+                // push return address
+                sb.append(String.format(pushReturnAddr, this.numReturnLabels));
+
+                // save the caller's memory segments
+                for (String memorySegment : List.of("local", "argument", "this", "that")) {
+                    sb.append(compileToAssembly(List.of("push", memorySegment, "0"), fileName));
+                }
+
+                sb.append(String.format(repositionARG, numArgs));
+                sb.append("@SP\nD=M\n@LCL\nM=D\n"); // set LCL = SP
+                sb.append(compileToAssembly(List.of("goto", funcName), fileName));
+                sb.append(String.format("(RETURN_%d)\n", this.numReturnLabels));
+                translatedAssembly = sb.toString();
                 break;
         }
         return translatedAssembly;

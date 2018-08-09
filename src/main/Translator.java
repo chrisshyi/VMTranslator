@@ -319,8 +319,53 @@ public class Translator {
                 }
                 break;
             }
+            case "return": {
+                StringBuilder sb = new StringBuilder();
+                // FRAME = LCL
+                sb.append("@LCL\n" +
+                        "D=M\n" +
+                        "@FRAME\n" +
+                        "M=D\n");
+                // RET = *(FRAME - 5)
+                sb.append("@5\n" +
+                        "A=D-A\n" +
+                        "D=M\n" +
+                        "@RET\n" +
+                        "M=D\n");
+                // *ARG = pop()
+                sb.append(getTopOfStack +
+                        "@ARG\n" +
+                        "A=M\n" +
+                        "M=D\n");
+                // SP = ARG + 1
+                sb.append("@ARG\n" +
+                        "D=M+1\n" +
+                        "@SP\n" +
+                        "M=D\n");
+                // THAT = *(FRAME - 1)
+                sb.append("@FRAME\n" +
+                        "A=M-1\n" +
+                        "D=M\n" +
+                        "@THAT\n" +
+                        "M=D\n");
 
-
+                String callerMemRestoreTemplate = "@FRAME\n" +
+                        "D=M\n" +
+                        "@%d\n" +
+                        "A=D-A\n" +
+                        "D=M\n" +
+                        "@%s\n" +
+                        "M=D\n";
+                // restore caller THIS, ARG, and LCL
+                List<String> memSegments = List.of("THIS", "ARG", "LCL");
+                for (int i = 0; i < memSegments.size(); i++) {
+                    sb.append(String.format(callerMemRestoreTemplate, i + 2, memSegments.get(i)));
+                }
+                // goto RET
+                sb.append("@RET\n0;JMP\n");
+                translatedAssembly = sb.toString();
+                break;
+            }
         }
         return translatedAssembly;
     }

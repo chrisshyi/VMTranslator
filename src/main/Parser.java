@@ -7,14 +7,13 @@ public class Parser {
 
     /**
      * Parses a line from the input file and splits it into its fields
+     *
+     * Assume that this line is a valid VM code line (i.e. not a comment line, nor a blank line)
      * @param line a line of VM code from the input file
      * @return the line split into its fields
      */
     public List<String> parse(String line) {
-        // if the entire line is a comment, return an empty list
-        if (line.startsWith("/")) {
-            return new ArrayList<>();
-        }
+        line = line.trim();
         // split the line at where the comment starts
         List<String> splitLine = new ArrayList<>(Arrays.asList(line.split("[/\\s]")));
         int desiredLength;

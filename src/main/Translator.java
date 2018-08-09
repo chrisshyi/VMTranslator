@@ -169,6 +169,7 @@ public class Translator {
         String translationTemplate;
         String translatedOperator = "";
         String translatedAssembly = "";
+        // give cases that declare additional variables their own scope
         switch (operator) {
             case "eq": case "gt": case "lt":
                 this.numComparisons += 1;
@@ -217,7 +218,7 @@ public class Translator {
                 }
                 translatedAssembly = String.format(translationTemplate, translatedOperator);
                 break;
-            case "push": case "pop":
+            case "push": case "pop": {
                 String memSeg = VMCode.get(1);
                 String index = VMCode.get(2);
                 if (memSeg.equals("pointer")) {
@@ -279,6 +280,7 @@ public class Translator {
                     translatedAssembly = String.format(translationTemplate, index, memAddr);
                     break;
                 }
+            }
             case "label":
                 translatedAssembly = String.format("(%s$%s)\n", this.currFunction, VMCode.get(1));
                 break;
@@ -288,25 +290,37 @@ public class Translator {
             case "if-goto":
                 translatedAssembly = String.format(getTopOfStack + "@%s$%s\nD;JNE\n", this.currFunction, VMCode.get(1));
                 break;
-            case "call":
+            case "call": {
                 String funcName = VMCode.get(1);
                 int numArgs = Integer.parseInt(VMCode.get(2));
                 this.numReturnLabels += 1;
                 StringBuilder sb = new StringBuilder();
                 // push return address
                 sb.append(String.format(pushReturnAddr, this.numReturnLabels));
-
                 // save the caller's memory segments
                 for (String memorySegment : List.of("local", "argument", "this", "that")) {
                     sb.append(compileToAssembly(List.of("push", memorySegment, "0"), fileName));
                 }
-
                 sb.append(String.format(repositionARG, numArgs));
                 sb.append("@SP\nD=M\n@LCL\nM=D\n"); // set LCL = SP
                 sb.append(compileToAssembly(List.of("goto", funcName), fileName));
                 sb.append(String.format("(RETURN_%d)\n", this.numReturnLabels));
                 translatedAssembly = sb.toString();
                 break;
+            }
+            case "function": {
+                String funcName = VMCode.get(1);
+                int localVars = Integer.parseInt(VMCode.get(2));
+                this.currFunction = funcName;
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("(%s)\n", funcName));
+                for (int i = 0; i < localVars; i++) {
+                    sb.append(compileToAssembly(List.of("push", "constant", "0"), fileName));
+                }
+                break;
+            }
+
+
         }
         return translatedAssembly;
     }

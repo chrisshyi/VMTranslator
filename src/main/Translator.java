@@ -127,6 +127,21 @@ public class Translator {
             "A=M\n" +
             "M=D\n";
 
+    // template for pushing a value from the static memory segment
+    // first %s.%d is the static memory location, e.g. Class1.0
+    private final String pushFromStatic = "@%s.%d\n" +
+            "D=M\n" +
+            "@SP\n" +
+            "A=M\n" +
+            "M=D\n" +
+            incrementSP;
+
+    // template for popping a value to the static memory segment
+    // first %s.%d is the static memory location, e.g. Class1.0
+    private final String popToStatic = getTopOfStack +
+            "@%s.%d\n" +
+            "M=D\n";
+
     // pops the top of the stack into a temporary memory segment
     // %s is for the offset
     private final String popToTemp = "@5\n" +
@@ -155,7 +170,7 @@ public class Translator {
             "@5\n" +
             "D=D-A\n" +
             "@SP\n" +
-            "D=M-D\n" +
+            "D=M+D\n" +
             "@ARG\n" +
             "M=D\n";
     /**
@@ -234,6 +249,13 @@ public class Translator {
                         translatedAssembly = String.format(pointerTemplate, "THAT");
                     }
                     break;
+                } else if (memSeg.equals("static")) {
+                    if (operator.equals("push")) {
+                        translatedAssembly = String.format(pushFromStatic, fileName, Integer.parseInt(index));
+                    } else {
+                        translatedAssembly = String.format(popToStatic, fileName, Integer.parseInt(index));
+                    }
+                    break;
                 }
                 String memAddr = ""; // the translated memory address location, e.g. local -> LCL
                 switch (memSeg) {
@@ -298,12 +320,18 @@ public class Translator {
                 // push return address
                 sb.append(String.format(pushReturnAddr, this.numReturnLabels));
                 // save the caller's memory segments
-                for (String memorySegment : List.of("local", "argument", "this", "that")) {
-                    sb.append(compileToAssembly(List.of("push", memorySegment, "0"), fileName));
+                String saveCallerMemSeg = "@%s\n" +
+                        "D=M\n" +
+                        "@SP\n" +
+                        "A=M\n" +
+                        "M=D\n" +
+                        incrementSP;
+                for (String memorySegment : List.of("LCL", "ARG", "THIS", "THAT")) {
+                    sb.append(String.format(saveCallerMemSeg, memorySegment));
                 }
                 sb.append(String.format(repositionARG, numArgs));
                 sb.append("@SP\nD=M\n@LCL\nM=D\n"); // set LCL = SP
-                sb.append(compileToAssembly(List.of("goto", funcName), fileName));
+                sb.append(String.format("@%s\n0;JMP\n", funcName));
                 sb.append(String.format("(RETURN_%d)\n", this.numReturnLabels));
                 translatedAssembly = sb.toString();
                 break;
@@ -317,6 +345,7 @@ public class Translator {
                 for (int i = 0; i < localVars; i++) {
                     sb.append(compileToAssembly(List.of("push", "constant", "0"), fileName));
                 }
+                translatedAssembly = sb.toString();
                 break;
             }
             case "return": {
@@ -362,7 +391,9 @@ public class Translator {
                     sb.append(String.format(callerMemRestoreTemplate, i + 2, memSegments.get(i)));
                 }
                 // goto RET
-                sb.append("@RET\n0;JMP\n");
+                sb.append("@RET\n" +
+                        "A=M\n" +
+                        "0;JMP\n");
                 translatedAssembly = sb.toString();
                 break;
             }

@@ -28,7 +28,7 @@ public class VMTranslator {
             filesToTranslate = inputFile.listFiles();
             int lastSeparatorInPath = inputFilePath.lastIndexOf(File.separatorChar);
             inputFileName = inputFilePath.substring(lastSeparatorInPath + 1, inputFilePath.length());
-            outputFilePath = inputFilePath + inputFileName + ".asm";
+            outputFilePath = inputFilePath + File.separatorChar + inputFileName + ".asm";
         } else {
             filesToTranslate = new File[1];
             filesToTranslate[0] = inputFile;
@@ -45,19 +45,28 @@ public class VMTranslator {
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
             if (inputIsDirectory) {
-                bw.write("SP=256\n" +
-                        "call Sys.init\n");
+                bw.write("@256\n" +
+                        "D=A\n" +
+                        "@SP\n" +
+                        "M=D\n" +
+                        translator.compileToAssembly(List.of("call", "Sys.init", "0"), "Sys"));
             }
             for (File fileToTranslate : filesToTranslate) {
-                try (BufferedReader br = new BufferedReader(new FileReader(fileToTranslate))) {
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        // skip comment line
-                        if (line.startsWith("/") || line.length() == 0) {
-                            continue;
+                if (fileToTranslate.toString().endsWith(".vm")) {
+                    String filePath = fileToTranslate.toString();
+                    int lastPeriodInPath = filePath.lastIndexOf('.');
+                    int lastSeparatorInPath = filePath.lastIndexOf(File.separatorChar);
+                    String fileName = filePath.substring(lastSeparatorInPath + 1, lastPeriodInPath);
+                    try (BufferedReader br = new BufferedReader(new FileReader(fileToTranslate))) {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            // skip comment line
+                            if (line.startsWith("/") || line.length() == 0) {
+                                continue;
+                            }
+                            List<String> parsedLine = parser.parse(line);
+                            bw.write(translator.compileToAssembly(parsedLine, fileName));
                         }
-                        List<String> parsedLine = parser.parse(line);
-                        bw.write(translator.compileToAssembly(parsedLine, inputFileName));
                     }
                 }
             }
